@@ -2,6 +2,7 @@
 import requests
 import re
 
+
 class RealtorCa:
     def __init__(self, url, previous_price):
         self.url = url
@@ -18,3 +19,17 @@ class RealtorCa:
             url = url.replace('https', 'http')
         response = requests.get(url, headers=headers)
 
+        plist = re.findall("price: '(.*)'", response.text)
+        plist = list(float(x) for x in plist)
+        self.current_price = max(plist)
+
+    def get_updates(self):
+        if self.previous_price != self.current_price:
+            has_updates = True
+
+        return {
+            'link': self.url,
+            'previous-price': self.previous_price,
+            'current-price': self.current_price,
+            'updates': has_updates
+        }
