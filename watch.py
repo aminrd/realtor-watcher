@@ -3,6 +3,8 @@ import numpy as np
 import argparse
 import datetime
 from tqdm import tqdm
+import time
+from fake_useragent import UserAgent
 
 # Real estate sites:
 from realtor_ca import RealtorCa
@@ -18,6 +20,9 @@ if args.verbose == 'True':
 else:
     verbose = False
 
+verbose = True
+ua = UserAgent()
+
 
 links = pd.read_csv(args.links)
 
@@ -31,12 +36,30 @@ links = links.fillna(0)
 links_updated = links.copy()
 
 for i in tqdm(range(links.shape[0]), desc='Checking urls'):
-    obj = RealtorCa(
-        links['links'][i],
-        links['current-price'][i],
-    )
 
-    out = obj.get_updates()
+    # =========================================================
+    # Waiting 5 seconds to bypass realtor sites robot checkers
+    time.sleep(5)
+    # =========================================================
+
+    try:
+        obj = RealtorCa(
+            links['links'][i],
+            links['current-price'][i],
+            user_agent=ua.random
+        )
+        out = obj.get_updates()
+    except Exception as e:
+        if verbose:
+            print(f"Error: {str(e)}")
+
+        out = {
+            'link': links['links'][i],
+            'previous-price': links['previous-price'][i],
+            'current-price': links['current-price'][i],
+            'updates': False
+        }
+
     prev = out['previous-price']
     curr = out['current-price']
     url = out['link']
